@@ -35,10 +35,10 @@
     </div>
     <div id='map'></div>
     <div class="bottom-bar">
-        <div class="menu-icon"><img src="icons/play.png" alt="Play to Earn"><br>Play to Earn</div>
-        <div class="menu-icon"><img src="icons/store.png" alt="Store"><br>Store</div>
-        <div class="menu-icon"><img src="icons/leaderboards.png" alt="Leaderboards"><br>Leaderboards</div>
-        <div class="menu-icon"><img src="icons/profile.png" alt="Profile"><br>Profile</div>
+        <div class="menu-icon"><img src="/mnt/data/bottom_menu_1.png" alt="Play to Earn"><br>Play to Earn</div>
+        <div class="menu-icon"><img src="/mnt/data/bottom_menu_2.png" alt="Store"><br>Store</div>
+        <div class="menu-icon"><img src="/mnt/data/bottom_menu_3.png" alt="Leaderboards"><br>Leaderboards</div>
+        <div class="menu-icon"><img src="/mnt/data/bottom_menu_4.png" alt="Profile"><br>Profile</div>
     </div>
     
     <script>
@@ -51,7 +51,7 @@
                 style: 'mapbox://styles/mapbox/dark-v10',
                 center: [longitude, latitude],
                 zoom: 17,
-                maxZoom: 17, // Заблокувати зміну масштабу
+                maxZoom: 17,
                 minZoom: 17
             });
             
@@ -72,12 +72,13 @@
                                 taps++;
                                 let xp = parseInt(document.getElementById('xp').innerText) + 1;
                                 document.getElementById('xp').innerText = xp;
-                                document.getElementById('xp-bar').style.width = xp % 100 + '%';
+                                document.getElementById('xp-bar').style.width = (xp % 100) + '%';
                                 marker.getElement().style.opacity = 1 - (taps / 100);
                             }
                         });
                     });
-                });
+                })
+                .catch(error => console.error('Помилка завантаження будівель:', error));
         }, () => alert('Не вдалося отримати геолокацію'));
     </script>
 </body>
