@@ -52,8 +52,8 @@
                 style: 'mapbox://styles/mapbox/dark-v10',
                 center: [longitude, latitude],
                 zoom: 18,
-                maxZoom: 17,
-                minZoom: 19
+                maxZoom: 19,
+                minZoom: 17
             });
             
             fetch(`https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${longitude},${latitude}.json?radius=100&access_token=${mapboxgl.accessToken}`)
