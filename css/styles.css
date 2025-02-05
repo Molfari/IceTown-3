@@ -1,0 +1,101 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+#map {
+    position: absolute;
+    top: 100px;
+    bottom: 60px;
+    width: 100%;
+}
+
+.top-bar {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100px;
+    background: #000D50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.top-bar .header {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+}
+
+.top-bar .level-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.top-bar .level-bar {
+    width: 100px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    position: relative;
+}
+
+.top-bar .level-fill {
+    height: 100%;
+    width: 0%;
+    background: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.bottom-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background: #222;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 2px solid rgba(255,255,255,0.3);
+}
+
+.menu-icon {
+    color: white;
+    text-align: center;
+    font-size: 12px;
+    position: relative;
+    padding: 10px 5px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.menu-icon img {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.menu-icon.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: auto;
+    height: 3px;
+    background: white;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    padding: 0 10px;
+}
