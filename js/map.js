@@ -11,29 +11,40 @@ navigator.geolocation.getCurrentPosition(position => {
         minZoom: 17
     });
 
-    loadBuildings(map, latitude, longitude);
-}, () => alert('Не вдалося отримати геолокацію'));
+    map.on('load', () => {
+        // Змінюємо стиль для всіх будівель
+        map.setPaintProperty('building', 'fill-color', '#0066CC');
+        map.setPaintProperty('building', 'fill-opacity', 0.8);
+        map.setPaintProperty('building', 'fill-outline-color', '#004499');
 
-function loadBuildings(map, latitude, longitude) {
-    fetch(`https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${longitude},${latitude}.json?radius=100&access_token=${mapboxgl.accessToken}`)
-        .then(response => response.json())
-        .then(data => {
-            data.features.forEach(feature => {
-                const [lon, lat] = feature.geometry.coordinates;
-                addBuildingMarker(map, lon, lat);
-            });
-        })
-        .catch(error => console.error('Помилка завантаження будівель:', error));
-}
+        // Додаємо обробник кліків по будівлях
+        map.on('click', 'building', (e) => {
+            if (energy > 0) {
+                increaseXP();
+                
+                // Додаємо візуальний ефект кліку
+                map.setPaintProperty('building', 'fill-color', [
+                    'case',
+                    ['==', ['id'], e.features[0].id],
+                    '#0055AA', // Колір при кліку
+                    '#0066CC'  // Звичайний колір
+                ]);
 
-function addBuildingMarker(map, lon, lat) {
-    const marker = new mapboxgl.Marker({ color: 'blue' })
-        .setLngLat([lon, lat])
-        .addTo(map);
+                // Повертаємо звичайний колір через 200мс
+                setTimeout(() => {
+                    map.setPaintProperty('building', 'fill-color', '#0066CC');
+                }, 200);
+            }
+        });
 
-    marker.getElement().addEventListener('click', () => {
-        if (energy > 0) {  // Перевіряємо наявність енергії
-            increaseXP();   // Викликаємо функцію, яка оновлює і XP, і енергію
-        }
+        // Змінюємо курсор при наведенні на будівлі
+        map.on('mouseenter', 'building', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'building', () => {
+            map.getCanvas().style.cursor = '';
+        });
     });
-}
+
+}, () => alert('Не вдалося отримати геолокацію'));
