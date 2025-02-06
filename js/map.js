@@ -30,6 +30,8 @@ function addBuildingMarker(map, lon, lat) {
     const marker = new mapboxgl.Marker({ color: 'blue' })
         .setLngLat([lon, lat])
         .addTo(map);
-
+        function handleBuildingTap(marker) {
+            increaseXP(); // Викликаємо функцію оновлення XP при тапі на будинок
+        }
     marker.getElement().addEventListener('click', () => handleBuildingTap(marker));
 }
