@@ -152,6 +152,63 @@ body, html {
     font-weight: 500;
 }
 
+.energy-bar-container {
+    position: fixed;
+    bottom: 62px;
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    z-index: 999;
+}
+
+.energy-icon {
+    font-size: 14px;
+    color: #FFD700;
+    text-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.energy-bar {
+    flex-grow: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 200px;
+}
+
+.energy-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.energy-text {
+    color: #FFD700;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: right;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .bottom-bar {
     position: fixed;
     bottom: 0;
@@ -208,6 +265,8 @@ body, html {
     border-radius: 0.5px;
 }
 
-.mapboxgl-control-container {
-    display: block !important;
+.mapboxgl-control-container,
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+    display: none !important;
 }
