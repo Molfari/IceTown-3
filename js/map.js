@@ -79,9 +79,9 @@ navigator.geolocation.getCurrentPosition(position => {
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v10',
         center: [longitude, latitude],
-        zoom: 19,
-        maxZoom: 19,
-        minZoom: 19,
+        zoom: 18,
+        maxZoom: 18,
+        minZoom: 18,
         pitch: 0,
         maxPitch: 0,
         dragRotate: false
