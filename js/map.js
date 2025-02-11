@@ -30,6 +30,13 @@ function updateUserLocation(map) {
             const { latitude, longitude } = position.coords;
             const newLocation = new mapboxgl.LngLat(longitude, latitude);
             
+            // Встановлюємо обмеження для скролу карти
+            const bounds = [
+                [longitude - 0.005, latitude - 0.005],
+                [longitude + 0.005, latitude + 0.005]
+            ];
+            map.setMaxBounds(bounds);
+            
             if (!userMarker) {
                 const el = document.createElement('div');
                 el.className = 'user-location-marker';
@@ -72,9 +79,9 @@ navigator.geolocation.getCurrentPosition(position => {
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v10',
         center: [longitude, latitude],
-        zoom: 18,
-        maxZoom: 18,
-        minZoom: 18,
+        zoom: 19,
+        maxZoom: 19,
+        minZoom: 19,
         pitch: 0,
         maxPitch: 0,
         dragRotate: false
@@ -96,6 +103,15 @@ navigator.geolocation.getCurrentPosition(position => {
                 radiusCircle.style.left = `${newPosition.x}px`;
                 radiusCircle.style.top = `${newPosition.y + mapBounds.top}px`;
             }
+
+            // Оновлення позиції всіх каунтерів при русі карти
+            buildingProgress.forEach((progress) => {
+                if (progress.element && progress.coordinates) {
+                    const point = map.project(progress.coordinates);
+                    progress.element.style.left = `${point.x}px`;
+                    progress.element.style.top = `${point.y}px`;
+                }
+            });
         });
 
         map.on('click', 'building', (e) => {
@@ -111,7 +127,7 @@ navigator.geolocation.getCurrentPosition(position => {
                     const buildingId = e.features[0].id;
                     const clickPoint = e.point;
                     
-                    let progress = buildingProgress.get(buildingId) || { taps: 100, element: null };
+                    let progress = buildingProgress.get(buildingId) || { taps: 100, element: null, coordinates: null };
 
                     if (progress.taps > 0) {
                         if (!progress.element) {
@@ -125,11 +141,13 @@ navigator.geolocation.getCurrentPosition(position => {
                             container.appendChild(progressElement);
                             document.body.appendChild(container);
                             progress.element = container;
+                            progress.coordinates = buildingPoint;
                         }
 
                         progress.taps -= 1;
-                        progress.element.style.left = `${clickPoint.x}px`;
-                        progress.element.style.top = `${clickPoint.y}px`;
+                        const point = map.project(progress.coordinates);
+                        progress.element.style.left = `${point.x}px`;
+                        progress.element.style.top = `${point.y}px`;
                         const textElement = progress.element.querySelector('.tap-progress-text');
                         textElement.textContent = `${progress.taps}%`;
                         progress.element.firstChild.style.setProperty('--progress', progress.taps);
@@ -137,7 +155,6 @@ navigator.geolocation.getCurrentPosition(position => {
                         buildingProgress.set(buildingId, progress);
 
                         if (progress.taps === 0) {
-                            // Змінюємо колір будівлі через setPaintProperty
                             const buildingFeature = e.features[0];
                             const buildingLayer = map.getLayer('building');
                             
