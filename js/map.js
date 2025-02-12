@@ -3,58 +3,65 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiaWNldG93biIsImEiOiJjbTY3dGN0NTYwNm1yMmtzOHRuc
 const buildingProgress = new Map();
 let userMarker = null;
 let radiusCircle = null;
-const ACTION_RADIUS = 50; // радіус дії в метрах
+const ACTION_RADIUS = 25; // радіус дії в метрах
 
 function calculateDistance(point1, point2) {
-    const toRad = angle => angle * (Math.PI / 180);
-    
-    const lat1 = point1[1];
-    const lon1 = point1[0];
-    const lat2 = point2[1];
-    const lon2 = point2[0];
-    
     const R = 6371000; // радіус Землі в метрах
-    
-    const φ1 = toRad(lat1);
-    const φ2 = toRad(lat2);
-    const Δφ = toRad(lat2 - lat1);
-    const Δλ = toRad(lon2 - lon1);
-    
+    const φ1 = point1[1] * Math.PI / 180;
+    const φ2 = point2[1] * Math.PI / 180;
+    const Δφ = (point2[1] - point1[1]) * Math.PI / 180;
+    const Δλ = (point2[0] - point1[0]) * Math.PI / 180;
+
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
              Math.cos(φ1) * Math.cos(φ2) *
              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    
+             
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    
+
     return R * c; // відстань в метрах
 }
 
-function isWithinActionRadius(userPosition, targetPoint, radius) {
+// Функція для перевірки чи точка знаходиться в радіусі
+function isPointInRadius(point, userPosition, radius) {
     const distance = calculateDistance(
         [userPosition.lng, userPosition.lat],
-        [targetPoint.lng, targetPoint.lat]
+        point
     );
     return distance <= radius;
+}
+
+// Функція для перевірки чи будівля перетинається з колом доступності
+function isBuildingInRadius(buildingFeature, userPosition, radius) {
+    const coordinates = buildingFeature.geometry.coordinates[0];
+    
+    // Перевіряємо чи хоча б одна точка будівлі знаходиться в радіусі
+    return coordinates.some(point => isPointInRadius(point, userPosition, radius));
 }
 
 function updateCircleRadius(map, center) {
     if (!radiusCircle) return;
 
-    // Отримуємо точки на відстані радіусу на північ та схід
-    const lat = center.lat;
-    const lng = center.lng;
-    const radius = ACTION_RADIUS / 111111; // конвертуємо метри в градуси
-
-    // Точка на відстані радіусу
-    const targetPoint = new mapboxgl.LngLat(lng + radius, lat);
+    // Отримуємо поточний zoom рівень
+    const zoom = map.getZoom();
+    
+    // Отримуємо точку геолокації користувача
+    const userLocation = userMarker.getLngLat();
+    
+    // Розраховуємо радіус для точки на схід від центру
+    const centerPoint = [userLocation.lng, userLocation.lat];
+    const eastPoint = [
+        userLocation.lng + (ACTION_RADIUS / (111111 * Math.cos(userLocation.lat * Math.PI / 180))),
+        userLocation.lat
+    ];
     
     // Конвертуємо в піксельні координати
-    const centerPx = map.project(center);
-    const targetPx = map.project(targetPoint);
+    const centerPx = map.project(centerPoint);
+    const eastPx = map.project(eastPoint);
     
-    // Розраховуємо діаметр
-    const radiusInPixels = Math.abs(targetPx.x - centerPx.x);
+    // Розраховуємо радіус у пікселях
+    const radiusInPixels = Math.abs(eastPx.x - centerPx.x);
     
+    // Встановлюємо розмір кола
     radiusCircle.style.width = `${radiusInPixels * 2}px`;
     radiusCircle.style.height = `${radiusInPixels * 2}px`;
 }
@@ -150,14 +157,13 @@ navigator.geolocation.getCurrentPosition(position => {
         });
 
         map.on('click', 'building', (e) => {
-            if (energy > 0) {
-                const buildingPoint = e.lngLat;
+            if (energy > 0 && userMarker) {
                 const userPosition = userMarker.getLngLat();
+                const buildingFeature = e.features[0];
                 
-                // Перевіряємо чи клік був в межах радіусу дії
-                if (isWithinActionRadius(userPosition, buildingPoint, ACTION_RADIUS)) {
-                    const buildingId = e.features[0].id;
-                    
+                // Перевіряємо чи будівля перетинається з колом доступності
+                if (isBuildingInRadius(buildingFeature, userPosition, ACTION_RADIUS)) {
+                    const buildingId = buildingFeature.id;
                     let progress = buildingProgress.get(buildingId) || { taps: 100, element: null, coordinates: null };
 
                     if (progress.taps > 0) {
@@ -172,7 +178,7 @@ navigator.geolocation.getCurrentPosition(position => {
                             container.appendChild(progressElement);
                             document.body.appendChild(container);
                             progress.element = container;
-                            progress.coordinates = buildingPoint;
+                            progress.coordinates = e.lngLat;
                         }
 
                         progress.taps -= 1;
@@ -186,9 +192,7 @@ navigator.geolocation.getCurrentPosition(position => {
                         buildingProgress.set(buildingId, progress);
 
                         if (progress.taps === 0) {
-                            const buildingFeature = e.features[0];
                             const buildingLayer = map.getLayer('building');
-                            
                             if (buildingLayer) {
                                 map.setPaintProperty(
                                     'building',
