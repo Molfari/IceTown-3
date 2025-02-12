@@ -3,25 +3,60 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiaWNldG93biIsImEiOiJjbTY3dGN0NTYwNm1yMmtzOHRuc
 const buildingProgress = new Map();
 let userMarker = null;
 let radiusCircle = null;
+const ACTION_RADIUS = 50; // радіус дії в метрах
 
 function calculateDistance(point1, point2) {
+    const toRad = angle => angle * (Math.PI / 180);
+    
     const lat1 = point1[1];
     const lon1 = point1[0];
     const lat2 = point2[1];
     const lon2 = point2[0];
     
-    const R = 6371e3;
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-
+    const R = 6371000; // радіус Землі в метрах
+    
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+             Math.cos(φ1) * Math.cos(φ2) *
+             Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    
+    return R * c; // відстань в метрах
+}
 
-    return R * c;
+function isWithinActionRadius(userPosition, targetPoint, radius) {
+    const distance = calculateDistance(
+        [userPosition.lng, userPosition.lat],
+        [targetPoint.lng, targetPoint.lat]
+    );
+    return distance <= radius;
+}
+
+function updateCircleRadius(map, center) {
+    if (!radiusCircle) return;
+
+    // Отримуємо точки на відстані радіусу на північ та схід
+    const lat = center.lat;
+    const lng = center.lng;
+    const radius = ACTION_RADIUS / 111111; // конвертуємо метри в градуси
+
+    // Точка на відстані радіусу
+    const targetPoint = new mapboxgl.LngLat(lng + radius, lat);
+    
+    // Конвертуємо в піксельні координати
+    const centerPx = map.project(center);
+    const targetPx = map.project(targetPoint);
+    
+    // Розраховуємо діаметр
+    const radiusInPixels = Math.abs(targetPx.x - centerPx.x);
+    
+    radiusCircle.style.width = `${radiusInPixels * 2}px`;
+    radiusCircle.style.height = `${radiusInPixels * 2}px`;
 }
 
 function updateUserLocation(map) {
@@ -29,13 +64,6 @@ function updateUserLocation(map) {
         position => {
             const { latitude, longitude } = position.coords;
             const newLocation = new mapboxgl.LngLat(longitude, latitude);
-            
-            // Встановлюємо обмеження для скролу карти
-            const bounds = [
-                [longitude - 0.005, latitude - 0.005],
-                [longitude + 0.005, latitude + 0.005]
-            ];
-            map.setMaxBounds(bounds);
             
             if (!userMarker) {
                 const el = document.createElement('div');
@@ -60,6 +88,7 @@ function updateUserLocation(map) {
                 const mapBounds = mapContainer.getBoundingClientRect();
                 radiusCircle.style.left = `${markerPosition.x}px`;
                 radiusCircle.style.top = `${markerPosition.y + mapBounds.top}px`;
+                updateCircleRadius(map, newLocation);
             }
             
             map.setCenter(newLocation);
@@ -102,9 +131,9 @@ navigator.geolocation.getCurrentPosition(position => {
                 const mapBounds = mapContainer.getBoundingClientRect();
                 radiusCircle.style.left = `${newPosition.x}px`;
                 radiusCircle.style.top = `${newPosition.y + mapBounds.top}px`;
+                updateCircleRadius(map, userMarker.getLngLat());
             }
 
-            // Оновлення позиції всіх каунтерів при русі карти
             buildingProgress.forEach((progress) => {
                 if (progress.element && progress.coordinates) {
                     const point = map.project(progress.coordinates);
@@ -114,18 +143,20 @@ navigator.geolocation.getCurrentPosition(position => {
             });
         });
 
+        map.on('zoom', () => {
+            if (userMarker) {
+                updateCircleRadius(map, userMarker.getLngLat());
+            }
+        });
+
         map.on('click', 'building', (e) => {
             if (energy > 0) {
                 const buildingPoint = e.lngLat;
                 const userPosition = userMarker.getLngLat();
-                const distance = calculateDistance(
-                    [userPosition.lng, userPosition.lat],
-                    [buildingPoint.lng, buildingPoint.lat]
-                );
-
-                if (distance <= 50) {
+                
+                // Перевіряємо чи клік був в межах радіусу дії
+                if (isWithinActionRadius(userPosition, buildingPoint, ACTION_RADIUS)) {
                     const buildingId = e.features[0].id;
-                    const clickPoint = e.point;
                     
                     let progress = buildingProgress.get(buildingId) || { taps: 100, element: null, coordinates: null };
 
@@ -180,6 +211,8 @@ navigator.geolocation.getCurrentPosition(position => {
 
                         increaseXP();
                     }
+                } else {
+                    console.log('Building is outside of action radius');
                 }
             }
         });

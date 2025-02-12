@@ -18,14 +18,15 @@ body, html {
 
 .radius-circle {
     position: fixed;
-    width: 400px;
-    height: 400px;
+    width: 100px;  /* Початковий розмір */
+    height: 100px; /* Початковий розмір */
     border-radius: 50%;
     border: 2px solid rgba(64, 179, 255, 0.5);
     background: transparent;
     pointer-events: none;
     transform: translate(-50%, -50%);
     z-index: 500;
+    transition: width 0.3s ease, height 0.3s ease; /* Додамо плавну анімацію */
 }
 
 .user-location-marker {
@@ -49,7 +50,7 @@ body, html {
     justify-content: space-between;
     padding: 8px 16px;
     box-sizing: border-box;
-    z-index: 1000;
+    z-index: 1001;
 }
 
 .top-bar .header {
@@ -241,7 +242,7 @@ body, html {
     align-items: center;
     padding: 6px 0;
     border-top: 2px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
+    z-index: 1001;
 }
 
 .menu-icon {
@@ -298,7 +299,7 @@ body, html {
     height: 46px;
     pointer-events: none;
     transform: translate(-50%, -50%);
-    z-index: 1000;
+    z-index: 900;
 }
 
 .tap-progress {
