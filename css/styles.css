@@ -18,15 +18,15 @@ body, html {
 
 .radius-circle {
     position: fixed;
-    width: 100px;  /* Початковий розмір */
-    height: 100px; /* Початковий розмір */
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     border: 2px solid rgba(64, 179, 255, 0.5);
     background: transparent;
     pointer-events: none;
     transform: translate(-50%, -50%);
     z-index: 500;
-    transition: width 0.3s ease, height 0.3s ease; /* Додамо плавну анімацію */
+    transition: width 0.3s ease, height 0.3s ease;
 }
 
 .user-location-marker {
@@ -293,6 +293,7 @@ body, html {
     display: none !important;
 }
 
+/* Tap Progress Styles */
 .tap-progress-container {
     position: absolute;
     width: 46px;
@@ -320,8 +321,10 @@ body, html {
     color: #0066FF;
     z-index: 2;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: color 0.3s ease;
 }
 
+/* Стилі для звичайного стану (розморожування) */
 .tap-progress::before {
     content: '';
     position: absolute;
@@ -330,13 +333,41 @@ body, html {
     right: -2px;
     bottom: -2px;
     border-radius: 50%;
-    background: 
-        conic-gradient(
-            #e8f4ff calc((100 - var(--progress, 100)) * 3.6deg),
-            #00DDFF 0
-        );
+    background: conic-gradient(
+        #e8f4ff calc((100 - var(--progress, 100)) * 3.6deg),
+        #00DDFF 0
+    );
     mask: radial-gradient(closest-side, transparent 75%, white 76%);
     -webkit-mask: radial-gradient(closest-side, transparent 75%, white 76%);
     transition: all 0.3s ease;
     filter: drop-shadow(0px 2px 4px rgba(0, 157, 255, 0.25));
+}
+
+/* Стилі для стану генерації монет */
+.tap-progress.generating-coins::before {
+    background: conic-gradient(
+        #FFD700 calc(var(--progress, 0) * 3.6deg),
+        #FFA500 0
+    );
+    filter: drop-shadow(0px 2px 4px rgba(255, 215, 0, 0.25));
+}
+
+.tap-progress-text.generating-coins {
+    color: #FFD700;
+    animation: coinPulse 2s infinite;
+}
+
+@keyframes coinPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
